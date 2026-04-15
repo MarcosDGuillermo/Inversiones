@@ -1,0 +1,1152 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inversiones</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    /* ═══ RESET & VARS ═══ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg-deep: #06090f;
+      --bg-base: #0b1120;
+      --bg-card: rgba(255,255,255,0.025);
+      --bg-card-hover: rgba(255,255,255,0.04);
+      --bg-input: rgba(255,255,255,0.05);
+      --border: rgba(255,255,255,0.06);
+      --border-hover: rgba(255,255,255,0.12);
+      --border-focus: #00d4aa;
+      --text-primary: #f1f5f9;
+      --text-secondary: #8892a4;
+      --text-muted: #4a5568;
+      --accent: #00d4aa;
+      --accent-glow: rgba(0,212,170,0.15);
+      --accent-soft: rgba(0,212,170,0.08);
+      --purple: #a78bfa;
+      --purple-soft: rgba(167,139,250,0.12);
+      --orange: #fb923c;
+      --orange-soft: rgba(251,146,60,0.12);
+      --pink: #f472b6;
+      --pink-soft: rgba(244,114,182,0.12);
+      --blue: #38bdf8;
+      --blue-soft: rgba(56,189,248,0.12);
+      --red: #f87171;
+      --red-soft: rgba(248,113,113,0.12);
+      --green: #4ade80;
+      --radius: 12px;
+      --radius-sm: 8px;
+      --font: 'DM Sans', system-ui, sans-serif;
+      --mono: 'DM Mono', 'Menlo', monospace;
+    }
+    html { font-size: 15px; }
+    body {
+      font-family: var(--font);
+      background: var(--bg-deep);
+      color: var(--text-primary);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    /* ═══ AMBIENT ═══ */
+    body::before {
+      content: '';
+      position: fixed; top: -30%; right: -15%; width: 600px; height: 600px;
+      background: radial-gradient(circle, rgba(0,212,170,0.04) 0%, transparent 65%);
+      pointer-events: none; z-index: 0;
+    }
+    body::after {
+      content: '';
+      position: fixed; bottom: -20%; left: -10%; width: 500px; height: 500px;
+      background: radial-gradient(circle, rgba(167,139,250,0.03) 0%, transparent 65%);
+      pointer-events: none; z-index: 0;
+    }
+
+    /* ═══ HEADER ═══ */
+    .header {
+      position: sticky; top: 0; z-index: 100;
+      padding: 14px 20px;
+      background: rgba(6,9,15,0.88);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .logo { display: flex; align-items: center; gap: 10px; }
+    .logo-mark {
+      width: 28px; height: 28px; border-radius: 8px;
+      background: linear-gradient(135deg, var(--accent), #00a88a);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; font-weight: 700; color: var(--bg-deep);
+    }
+    .logo-text { font-size: 17px; font-weight: 700; letter-spacing: -0.4px; }
+    .logo-badge {
+      font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 6px;
+      background: var(--accent-glow); color: var(--accent);
+    }
+    .nav { display: flex; gap: 2px; background: var(--bg-input); border-radius: 10px; padding: 3px; }
+    .nav-btn {
+      padding: 7px 14px; border-radius: var(--radius-sm); border: none;
+      cursor: pointer; font-size: 13px; font-weight: 500; font-family: var(--font);
+      background: transparent; color: var(--text-muted); transition: all 0.2s;
+    }
+    .nav-btn:hover { color: var(--text-secondary); }
+    .nav-btn.active { background: var(--accent-glow); color: var(--accent); }
+    .nav-btn .nav-icon { margin-right: 5px; }
+    .nav-btn .nav-label { }
+
+    /* ═══ MAIN ═══ */
+    .main { max-width: 1180px; margin: 0 auto; padding: 20px 16px 60px; position: relative; z-index: 1; }
+    .view { display: none; animation: fadeUp 0.3s ease; }
+    .view.active { display: block; }
+    @keyframes fadeUp { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+
+    /* ═══ CARDS ═══ */
+    .card {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 20px;
+      transition: border-color 0.2s;
+    }
+    .card:hover { border-color: var(--border-hover); }
+    .card-title { font-size: 14px; font-weight: 600; margin-bottom: 16px; color: var(--text-primary); }
+
+    /* ═══ KPI GRID ═══ */
+    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(155px, 1fr)); gap: 10px; margin-bottom: 20px; }
+    .kpi { position: relative; overflow: hidden; }
+    .kpi-accent {
+      position: absolute; top: 0; left: 0; width: 3px; height: 100%;
+      border-radius: var(--radius) 0 0 var(--radius);
+    }
+    .kpi-label { font-size: 11px; color: var(--text-secondary); font-weight: 500; margin-bottom: 5px; }
+    .kpi-value { font-size: 19px; font-weight: 700; font-family: var(--mono); color: var(--text-primary); }
+
+    /* ═══ CHARTS ═══ */
+    .charts-row { display: grid; grid-template-columns: 2fr 1fr; gap: 14px; margin-bottom: 20px; }
+    .chart-wrap { position: relative; height: 260px; }
+    .chart-wrap canvas { width: 100% !important; height: 100% !important; }
+
+    /* ═══ TABLE ═══ */
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; }
+    th {
+      text-align: left; padding: 10px 12px; font-size: 11px; font-weight: 600;
+      color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;
+      border-bottom: 1px solid var(--border); cursor: pointer; user-select: none;
+      white-space: nowrap;
+    }
+    th:hover { color: var(--text-primary); }
+    td { padding: 10px 12px; font-size: 13px; border-bottom: 1px solid rgba(255,255,255,0.02); }
+    tr:hover td { background: rgba(255,255,255,0.015); }
+
+    /* ═══ TAGS ═══ */
+    .tag {
+      display: inline-block; padding: 3px 9px; border-radius: 6px;
+      font-size: 11px; font-weight: 600; white-space: nowrap;
+    }
+    .tag-compra { background: var(--accent-soft); color: var(--accent); }
+    .tag-venta { background: var(--purple-soft); color: var(--purple); }
+    .tag-abierta { background: var(--accent-soft); color: var(--accent); }
+    .tag-cerrada { background: var(--purple-soft); color: var(--purple); }
+    .tag-parcial { background: var(--orange-soft); color: var(--orange); }
+    .tag-crypto { color: var(--orange); background: var(--orange-soft); }
+    .tag-cedears { color: var(--accent); background: var(--accent-soft); }
+    .tag-bonos { color: var(--purple); background: var(--purple-soft); }
+    .tag-plazo { color: var(--pink); background: var(--pink-soft); }
+    .tag-cauciones { color: var(--blue); background: var(--blue-soft); }
+
+    /* ═══ FORMS ═══ */
+    input, select, textarea {
+      background: var(--bg-input); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); padding: 9px 12px; color: var(--text-primary);
+      font-size: 13px; font-family: var(--font); outline: none; width: 100%;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--border-focus);
+      box-shadow: 0 0 0 3px rgba(0,212,170,0.1);
+    }
+    label { font-size: 11px; color: var(--text-secondary); margin-bottom: 4px; display: block; font-weight: 500; }
+
+    /* ═══ BUTTONS ═══ */
+    .btn {
+      padding: 9px 18px; border-radius: var(--radius-sm); border: none;
+      cursor: pointer; font-size: 13px; font-weight: 600; font-family: var(--font);
+      transition: all 0.2s; display: inline-flex; align-items: center; gap: 6px;
+    }
+    .btn-primary { background: var(--accent); color: var(--bg-deep); }
+    .btn-primary:hover { background: #00e8b8; transform: translateY(-1px); }
+    .btn-ghost { background: var(--bg-input); color: var(--text-secondary); }
+    .btn-ghost:hover { background: rgba(255,255,255,0.08); color: var(--text-primary); }
+    .btn-danger { background: var(--red-soft); color: var(--red); }
+    .btn-danger:hover { background: rgba(248,113,113,0.2); }
+    .btn-sm { padding: 5px 10px; font-size: 12px; }
+
+    /* ═══ TOOLBAR ═══ */
+    .toolbar { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; align-items: center; }
+    .toolbar input, .toolbar select { max-width: 200px; }
+    .toolbar-count { font-size: 12px; color: var(--text-muted); margin-left: auto; }
+
+    /* ═══ MODAL ═══ */
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.65);
+      backdrop-filter: blur(5px); z-index: 200;
+      display: none; align-items: center; justify-content: center; padding: 16px;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      width: 100%; max-width: 500px; max-height: 90vh; overflow: auto;
+      background: #111827; border: 1px solid var(--border-hover);
+      border-radius: var(--radius); padding: 24px;
+    }
+    .modal-title { font-size: 16px; font-weight: 600; margin-bottom: 20px; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .form-full { grid-column: 1 / -1; }
+    .form-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 18px; }
+
+    /* ═══ ALERT ITEM ═══ */
+    .alert-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 14px 16px; background: rgba(255,255,255,0.02);
+      border-radius: 10px; border: 1px solid var(--border);
+      transition: opacity 0.2s;
+    }
+    .alert-item.inactive { opacity: 0.45; }
+    .alert-actions { margin-left: auto; display: flex; gap: 6px; }
+
+    /* ═══ EMPTY STATE ═══ */
+    .empty { text-align: center; padding: 50px 20px; color: var(--text-muted); font-size: 14px; }
+
+    /* ═══ LOADING ═══ */
+    .loading-screen {
+      display: flex; align-items: center; justify-content: center;
+      height: 100vh; flex-direction: column; gap: 12px;
+    }
+    .loading-dot { font-size: 28px; animation: pulse 1.4s infinite; color: var(--accent); }
+    @keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.3} }
+
+    /* ═══ STATUS BAR ═══ */
+    .status-bar {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      padding: 8px 20px; font-size: 11px;
+      background: rgba(6,9,15,0.9); backdrop-filter: blur(8px);
+      border-top: 1px solid var(--border); color: var(--text-muted);
+      display: flex; align-items: center; gap: 8px; z-index: 50;
+    }
+    .status-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--accent); animation: pulse 2s infinite;
+    }
+    .status-dot.offline { background: var(--red); }
+    .status-dot.syncing { background: var(--orange); }
+
+    /* ═══ TOAST ═══ */
+    .toast-container { position: fixed; top: 20px; right: 20px; z-index: 300; display: flex; flex-direction: column; gap: 8px; }
+    .toast {
+      padding: 12px 18px; border-radius: var(--radius-sm);
+      font-size: 13px; font-weight: 500; animation: slideIn 0.3s ease;
+      border: 1px solid var(--border);
+    }
+    .toast-success { background: rgba(0,212,170,0.15); color: var(--accent); border-color: rgba(0,212,170,0.2); }
+    .toast-error { background: var(--red-soft); color: var(--red); border-color: rgba(248,113,113,0.2); }
+    @keyframes slideIn { from { opacity:0; transform:translateX(30px); } to { opacity:1; transform:translateX(0); } }
+
+    /* ═══ P&L COLORS ═══ */
+    .positive { color: var(--green); }
+    .negative { color: var(--red); }
+    .mono { font-family: var(--mono); font-size: 12px; }
+
+    /* ═══ RESPONSIVE ═══ */
+    @media(max-width: 768px) {
+      html { font-size: 14px; }
+      .nav-label { display: none; }
+      .charts-row { grid-template-columns: 1fr; }
+      .form-grid { grid-template-columns: 1fr; }
+      .hide-mobile { display: none; }
+      .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+      .header { padding: 10px 14px; }
+      .main { padding: 14px 10px 60px; }
+    }
+
+    /* ═══ CONFIG BANNER ═══ */
+    .config-banner {
+      background: var(--orange-soft); border: 1px solid rgba(251,146,60,0.2);
+      border-radius: var(--radius); padding: 16px 20px; margin-bottom: 20px;
+      font-size: 13px; color: var(--orange);
+    }
+    .config-banner code {
+      background: rgba(0,0,0,0.3); padding: 2px 6px; border-radius: 4px;
+      font-family: var(--mono); font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- LOADING -->
+  <div id="loadingScreen" class="loading-screen">
+    <div class="loading-dot">◉</div>
+    <div style="color: var(--text-secondary); font-size: 14px;">Conectando con Google Sheets...</div>
+  </div>
+
+  <!-- APP (hidden until loaded) -->
+  <div id="app" style="display:none;">
+
+    <!-- HEADER -->
+    <header class="header">
+      <div class="logo">
+        <div class="logo-mark">◉</div>
+        <span class="logo-text">Inversiones</span>
+        <span class="logo-badge" id="opsCount">0 ops</span>
+      </div>
+      <nav class="nav">
+        <button class="nav-btn active" data-view="dashboard"><span class="nav-icon">📊</span><span class="nav-label">Dashboard</span></button>
+        <button class="nav-btn" data-view="operaciones"><span class="nav-icon">💼</span><span class="nav-label">Operaciones</span></button>
+        <button class="nav-btn" data-view="analisis"><span class="nav-icon">📈</span><span class="nav-label">Análisis</span></button>
+        <button class="nav-btn" data-view="alertas"><span class="nav-icon">🔔</span><span class="nav-label">Alertas</span></button>
+        <button class="nav-btn" data-view="reportes"><span class="nav-icon">📋</span><span class="nav-label">Reportes</span></button>
+      </nav>
+    </header>
+
+    <!-- MAIN CONTENT -->
+    <main class="main">
+
+      <!-- CONFIG BANNER (shown if no API URL set) -->
+      <div id="configBanner" class="config-banner" style="display:none;">
+        ⚠️ Falta configurar la URL del Apps Script. Abrí el archivo <code>index.html</code>, buscá <code>API_URL</code> al final y pegá tu URL. Mientras tanto, la app funciona en modo local (los datos no se guardan en Google Sheets).
+      </div>
+
+      <!-- ═══ DASHBOARD ═══ -->
+      <div id="view-dashboard" class="view active">
+        <div class="kpi-grid" id="kpiGrid"></div>
+        <div class="charts-row">
+          <div class="card">
+            <div class="card-title">Evolución mensual</div>
+            <div class="chart-wrap"><canvas id="chartEvolution"></canvas></div>
+          </div>
+          <div class="card">
+            <div class="card-title">Por categoría</div>
+            <div class="chart-wrap"><canvas id="chartCategories"></canvas></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Top 10 Tickers</div>
+          <div class="chart-wrap" style="height:280px;"><canvas id="chartTickers"></canvas></div>
+        </div>
+      </div>
+
+      <!-- ═══ OPERACIONES ═══ -->
+      <div id="view-operaciones" class="view">
+        <div class="toolbar">
+          <button class="btn btn-primary" onclick="openNewOp()">+ Nueva operación</button>
+          <input type="text" id="searchInput" placeholder="Buscar ticker..." oninput="renderOpsTable()">
+          <select id="filterCat" onchange="renderOpsTable()">
+            <option value="todas">Todas las categorías</option>
+            <option value="crypto">crypto</option>
+            <option value="cedears/acciones">cedears/acciones</option>
+            <option value="bonos">bonos</option>
+            <option value="plazo fijo/FCI">plazo fijo/FCI</option>
+            <option value="cauciones">cauciones</option>
+          </select>
+          <select id="filterStatus" onchange="renderOpsTable()">
+            <option value="todas">Todos los estados</option>
+            <option value="abierta">Abierta</option>
+            <option value="cerrada">Cerrada</option>
+            <option value="parcial">Parcial</option>
+          </select>
+          <span class="toolbar-count" id="resultsCount"></span>
+        </div>
+        <div class="card">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th onclick="sortBy('fecha')">Fecha <span id="sort-fecha"></span></th>
+                  <th onclick="sortBy('ticker')">Ticker <span id="sort-ticker"></span></th>
+                  <th>Tipo</th>
+                  <th onclick="sortBy('cantidad')">Cant. <span id="sort-cantidad"></span></th>
+                  <th onclick="sortBy('precio')">Precio <span id="sort-precio"></span></th>
+                  <th class="hide-mobile">Categoría</th>
+                  <th>Estado</th>
+                  <th style="width:80px">Acc.</th>
+                </tr>
+              </thead>
+              <tbody id="opsTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ ANALISIS ═══ -->
+      <div id="view-analisis" class="view">
+        <div class="toolbar" id="analysisCatFilter"></div>
+        <div class="card" style="margin-bottom:16px;">
+          <div class="card-title" id="analysisTitle">Inversión acumulada</div>
+          <div class="chart-wrap" style="height:300px;"><canvas id="chartAnalysis"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Desglose anual</div>
+          <div class="chart-wrap" style="height:260px;"><canvas id="chartYearly"></canvas></div>
+        </div>
+      </div>
+
+      <!-- ═══ ALERTAS ═══ -->
+      <div id="view-alertas" class="view">
+        <div class="card" style="margin-bottom:20px;">
+          <div class="card-title">Nueva alerta de precio</div>
+          <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:end;">
+            <div style="flex:1; min-width:120px;">
+              <label>Ticker</label>
+              <input type="text" id="alertTicker" placeholder="Ej: GGAL" list="tickerListData">
+              <datalist id="tickerListData"></datalist>
+            </div>
+            <div style="min-width:150px;">
+              <label>Condición</label>
+              <select id="alertCondition">
+                <option value="above">Sube por encima de</option>
+                <option value="below">Baja por debajo de</option>
+              </select>
+            </div>
+            <div style="min-width:100px;">
+              <label>Precio</label>
+              <input type="number" id="alertPrice">
+            </div>
+            <button class="btn btn-primary" onclick="addAlert()">Agregar</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title" id="alertsTitle">Mis alertas (0)</div>
+          <div id="alertsList"></div>
+        </div>
+      </div>
+
+      <!-- ═══ REPORTES ═══ -->
+      <div id="view-reportes" class="view">
+        <div class="kpi-grid" id="reportKpis"></div>
+        <div class="card">
+          <div class="card-title">P&L por Ticker</div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Ticker</th>
+                  <th>Categoría</th>
+                  <th>Total compra</th>
+                  <th>Total venta</th>
+                  <th>Precio prom.</th>
+                  <th class="hide-mobile">Pos. abierta</th>
+                  <th>P&L realizado</th>
+                </tr>
+              </thead>
+              <tbody id="pnlTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </main>
+
+    <!-- MODAL -->
+    <div class="modal-overlay" id="modalOverlay" onclick="if(event.target===this)closeModal()">
+      <div class="modal">
+        <div class="modal-title" id="modalTitle">Nueva operación</div>
+        <div class="form-grid">
+          <div>
+            <label>Ticker</label>
+            <input type="text" id="fTicker" placeholder="GGAL, BTC, AL30...">
+          </div>
+          <div>
+            <label>Fecha</label>
+            <input type="date" id="fFecha">
+          </div>
+          <div>
+            <label>Tipo</label>
+            <select id="fTipo">
+              <option value="compra">Compra</option>
+              <option value="venta">Venta</option>
+            </select>
+          </div>
+          <div>
+            <label>Categoría</label>
+            <select id="fCategoria">
+              <option value="crypto">crypto</option>
+              <option value="cedears/acciones">cedears/acciones</option>
+              <option value="bonos">bonos</option>
+              <option value="plazo fijo/FCI">plazo fijo/FCI</option>
+              <option value="cauciones">cauciones</option>
+            </select>
+          </div>
+          <div>
+            <label>Cantidad</label>
+            <input type="number" id="fCantidad" step="any">
+          </div>
+          <div>
+            <label>Precio</label>
+            <input type="number" id="fPrecio" step="any">
+          </div>
+          <div>
+            <label>Comisión</label>
+            <input type="number" id="fComision" step="any" value="0">
+          </div>
+          <div>
+            <label>Estado</label>
+            <select id="fEstado">
+              <option value="abierta">Abierta</option>
+              <option value="cerrada">Cerrada</option>
+              <option value="parcial">Parcial</option>
+            </select>
+          </div>
+          <div class="form-full">
+            <label>Notas</label>
+            <textarea id="fNotas" rows="2"></textarea>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
+          <button class="btn btn-primary" id="btnSaveOp" onclick="saveOp()">Guardar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- STATUS BAR -->
+    <div class="status-bar">
+      <div class="status-dot" id="statusDot"></div>
+      <span id="statusText">Conectado</span>
+    </div>
+
+    <!-- TOAST CONTAINER -->
+    <div class="toast-container" id="toastContainer"></div>
+  </div>
+
+  <script>
+    // ═══════════════════════════════════════════════════════════
+    // CONFIGURACIÓN — Pegá tu URL de Apps Script acá
+    // ═══════════════════════════════════════════════════════════
+    const API_URL = "https://script.google.com/macros/s/AKfycbx73ghxM88or2EVFEKpZyjbdpyywQHpHrwJ2VKIgDVszlGKwoAZ32V3ve97c0QtuvMzCQ/exec"; // ← PEGÁ ACÁ TU URL
+
+    // ═══════════════════════════════════════════════════════════
+    // STATE
+    // ═══════════════════════════════════════════════════════════
+    let ops = [];
+    let alerts = [];
+    let currentView = "dashboard";
+    let sortField = "fecha";
+    let sortDir = "desc";
+    let editingOpId = null;
+    let analysisCat = "todas";
+    let charts = {};
+    const isConfigured = () => API_URL && API_URL.length > 10;
+
+    // ═══════════════════════════════════════════════════════════
+    // HELPERS
+    // ═══════════════════════════════════════════════════════════
+    const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+    const fmt = (n) => {
+      if (n == null || isNaN(n)) return "-";
+      return new Intl.NumberFormat("es-AR", { style:"currency", currency:"ARS", maximumFractionDigits:0 }).format(n);
+    };
+    const catTagClass = (c) => {
+      if (c === "crypto") return "tag-crypto";
+      if (c === "cedears/acciones") return "tag-cedears";
+      if (c === "bonos") return "tag-bonos";
+      if (c === "plazo fijo/FCI") return "tag-plazo";
+      if (c === "cauciones") return "tag-cauciones";
+      return "";
+    };
+    const catColor = { crypto:"#fb923c", "cedears/acciones":"#00d4aa", bonos:"#a78bfa", "plazo fijo/FCI":"#f472b6", cauciones:"#38bdf8" };
+    const toDateStr = (d) => {
+      if (!d) return "";
+      if (typeof d === "string") return d.split("T")[0];
+      if (d instanceof Date) return d.toISOString().split("T")[0];
+      return String(d);
+    };
+
+    // ═══════════════════════════════════════════════════════════
+    // TOAST
+    // ═══════════════════════════════════════════════════════════
+    function toast(msg, type = "success") {
+      const el = document.createElement("div");
+      el.className = `toast toast-${type}`;
+      el.textContent = msg;
+      document.getElementById("toastContainer").appendChild(el);
+      setTimeout(() => el.remove(), 3000);
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // API
+    // ═══════════════════════════════════════════════════════════
+    function setStatus(status, text) {
+      const dot = document.getElementById("statusDot");
+      const txt = document.getElementById("statusText");
+      dot.className = "status-dot" + (status === "offline" ? " offline" : status === "syncing" ? " syncing" : "");
+      txt.textContent = text;
+    }
+
+    async function apiGet(action) {
+      if (!isConfigured()) return null;
+      setStatus("syncing", "Sincronizando...");
+      try {
+        const r = await fetch(`${API_URL}?action=${action}`);
+        const data = await r.json();
+        setStatus("online", "Conectado");
+        return data;
+      } catch(e) {
+        setStatus("offline", "Sin conexión");
+        toast("Error de conexión", "error");
+        return null;
+      }
+    }
+
+    async function apiPost(action, body) {
+      if (!isConfigured()) return null;
+      setStatus("syncing", "Guardando...");
+      try {
+        const r = await fetch(`${API_URL}?action=${action}`, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain" },
+          body: JSON.stringify(body)
+        });
+        const data = await r.json();
+        setStatus("online", "Conectado");
+        return data;
+      } catch(e) {
+        setStatus("offline", "Sin conexión");
+        toast("Error al guardar", "error");
+        return null;
+      }
+    }
+
+    async function apiDelete(action, id) {
+      if (!isConfigured()) return null;
+      setStatus("syncing", "Eliminando...");
+      try {
+        const r = await fetch(`${API_URL}?action=${action}&id=${id}`);
+        const data = await r.json();
+        setStatus("online", "Conectado");
+        return data;
+      } catch(e) {
+        setStatus("offline", "Sin conexión");
+        toast("Error al eliminar", "error");
+        return null;
+      }
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // DATA LOAD / SAVE
+    // ═══════════════════════════════════════════════════════════
+    function loadLocal() {
+      try {
+        ops = JSON.parse(localStorage.getItem("inv_ops") || "[]");
+        alerts = JSON.parse(localStorage.getItem("inv_alerts") || "[]");
+      } catch(e) { ops = []; alerts = []; }
+    }
+
+    function saveLocal() {
+      localStorage.setItem("inv_ops", JSON.stringify(ops));
+      localStorage.setItem("inv_alerts", JSON.stringify(alerts));
+    }
+
+    async function loadData() {
+      if (isConfigured()) {
+        const [opsData, alertsData] = await Promise.all([apiGet("getOps"), apiGet("getAlerts")]);
+        if (opsData && opsData.ops) ops = opsData.ops;
+        if (alertsData && alertsData.alerts) alerts = alertsData.alerts;
+        saveLocal(); // cache locally too
+      } else {
+        loadLocal();
+      }
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // NAVIGATION
+    // ═══════════════════════════════════════════════════════════
+    function switchView(view) {
+      currentView = view;
+      document.querySelectorAll(".nav-btn").forEach(b => b.classList.toggle("active", b.dataset.view === view));
+      document.querySelectorAll(".view").forEach(v => {
+        v.classList.toggle("active", v.id === `view-${view}`);
+      });
+      renderCurrentView();
+    }
+
+    document.querySelectorAll(".nav-btn").forEach(b => {
+      b.addEventListener("click", () => switchView(b.dataset.view));
+    });
+
+    // ═══════════════════════════════════════════════════════════
+    // RENDER: DASHBOARD
+    // ═══════════════════════════════════════════════════════════
+    function renderDashboard() {
+      const compras = ops.filter(o => o.tipo === "compra");
+      const ventas = ops.filter(o => o.tipo === "venta");
+      const totalInvertido = compras.reduce((s,o) => s + (Number(o.cantidad)||0)*(Number(o.precio)||0), 0);
+      const totalVendido = ventas.reduce((s,o) => s + (Number(o.cantidad)||0)*(Number(o.precio)||0), 0);
+      const totalComisiones = ops.reduce((s,o) => s + (Number(o.comision)||0), 0);
+      const abiertas = ops.filter(o => o.estado === "abierta").length;
+      const cerradas = ops.filter(o => o.estado === "cerrada").length;
+
+      document.getElementById("opsCount").textContent = `${ops.length} ops`;
+
+      const kpis = [
+        { label:"Total invertido", value:fmt(totalInvertido), color:"var(--accent)" },
+        { label:"Total vendido", value:fmt(totalVendido), color:"var(--purple)" },
+        { label:"Comisiones", value:fmt(totalComisiones), color:"var(--pink)" },
+        { label:"Operaciones", value:ops.length, color:"var(--blue)" },
+        { label:"Abiertas", value:abiertas, color:"var(--orange)" },
+        { label:"Cerradas", value:cerradas, color:"var(--purple)" }
+      ];
+      document.getElementById("kpiGrid").innerHTML = kpis.map(k => `
+        <div class="card kpi">
+          <div class="kpi-accent" style="background:${k.color}"></div>
+          <div class="kpi-label">${k.label}</div>
+          <div class="kpi-value">${k.value}</div>
+        </div>
+      `).join("");
+
+      // Monthly evolution
+      const monthly = {};
+      compras.forEach(o => {
+        const d = toDateStr(o.fecha);
+        if (!d) return;
+        const key = d.substring(0,7);
+        monthly[key] = (monthly[key]||0) + (Number(o.cantidad)||0)*(Number(o.precio)||0);
+      });
+      const months = Object.keys(monthly).sort();
+      let cum = 0;
+      const cumData = months.map(m => { cum += monthly[m]; return cum; });
+      const barData = months.map(m => Math.round(monthly[m]));
+
+      destroyChart("chartEvolution");
+      if (months.length > 0) {
+        charts.chartEvolution = new Chart(document.getElementById("chartEvolution"), {
+          type: "bar",
+          data: {
+            labels: months,
+            datasets: [
+              { type:"line", label:"Acumulado", data:cumData, borderColor:"#00d4aa", backgroundColor:"rgba(0,212,170,0.1)", fill:true, tension:0.3, pointRadius:2, borderWidth:2, yAxisID:"y" },
+              { type:"bar", label:"Mensual", data:barData, backgroundColor:"rgba(0,212,170,0.25)", borderRadius:4, yAxisID:"y" }
+            ]
+          },
+          options: chartOpts()
+        });
+      }
+
+      // Category pie
+      const byCat = {};
+      compras.forEach(o => {
+        const c = o.categoria || "otros";
+        byCat[c] = (byCat[c]||0) + (Number(o.cantidad)||0)*(Number(o.precio)||0);
+      });
+      const catLabels = Object.keys(byCat);
+      const catValues = catLabels.map(c => Math.round(byCat[c]));
+      const catColors = catLabels.map(c => catColor[c] || "#64748b");
+
+      destroyChart("chartCategories");
+      if (catLabels.length > 0) {
+        charts.chartCategories = new Chart(document.getElementById("chartCategories"), {
+          type: "doughnut",
+          data: { labels:catLabels, datasets:[{ data:catValues, backgroundColor:catColors, borderWidth:0 }] },
+          options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:"bottom", labels:{ color:"#8892a4", font:{size:11}, padding:12 } } } }
+        });
+      }
+
+      // Top tickers
+      const tickerMap = {};
+      ops.forEach(o => {
+        const t = (o.ticker||"").toUpperCase(); if (!t) return;
+        if (!tickerMap[t]) tickerMap[t] = { compras:0, ventas:0 };
+        const m = (Number(o.cantidad)||0)*(Number(o.precio)||0);
+        if (o.tipo === "compra") tickerMap[t].compras += m; else tickerMap[t].ventas += m;
+      });
+      const top = Object.entries(tickerMap).sort((a,b) => b[1].compras - a[1].compras).slice(0,10);
+
+      destroyChart("chartTickers");
+      if (top.length > 0) {
+        charts.chartTickers = new Chart(document.getElementById("chartTickers"), {
+          type: "bar",
+          data: {
+            labels: top.map(t => t[0]),
+            datasets: [
+              { label:"Compras", data:top.map(t => Math.round(t[1].compras)), backgroundColor:"#00d4aa", borderRadius:4 },
+              { label:"Ventas", data:top.map(t => Math.round(t[1].ventas)), backgroundColor:"#a78bfa", borderRadius:4 }
+            ]
+          },
+          options: { ...chartOpts(), indexAxis:"y" }
+        });
+      }
+    }
+
+    function chartOpts() {
+      return {
+        responsive:true, maintainAspectRatio:false,
+        scales: {
+          x:{ ticks:{ color:"#4a5568", font:{size:10} }, grid:{ color:"rgba(255,255,255,0.03)" } },
+          y:{ ticks:{ color:"#4a5568", font:{size:10}, callback:v=>(v/1000).toFixed(0)+"k" }, grid:{ color:"rgba(255,255,255,0.03)" } }
+        },
+        plugins: { legend:{ labels:{ color:"#8892a4", font:{size:11} } }, tooltip:{ backgroundColor:"#1e293b", titleColor:"#f1f5f9", bodyColor:"#f1f5f9", borderColor:"rgba(255,255,255,0.1)", borderWidth:1 } }
+      };
+    }
+
+    function destroyChart(id) {
+      if (charts[id]) { charts[id].destroy(); charts[id] = null; }
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // RENDER: OPERACIONES
+    // ═══════════════════════════════════════════════════════════
+    function getFilteredOps() {
+      let list = [...ops];
+      const cat = document.getElementById("filterCat").value;
+      const status = document.getElementById("filterStatus").value;
+      const search = (document.getElementById("searchInput").value || "").toLowerCase();
+      if (cat !== "todas") list = list.filter(o => o.categoria === cat);
+      if (status !== "todas") list = list.filter(o => o.estado === status);
+      if (search) list = list.filter(o => (o.ticker||"").toLowerCase().includes(search) || (o.notas||"").toLowerCase().includes(search));
+      list.sort((a,b) => {
+        let va = a[sortField], vb = b[sortField];
+        if (sortField === "fecha") { va = toDateStr(va); vb = toDateStr(vb); }
+        if (sortField === "precio" || sortField === "cantidad") { va = Number(va)||0; vb = Number(vb)||0; }
+        if (va < vb) return sortDir === "asc" ? -1 : 1;
+        if (va > vb) return sortDir === "asc" ? 1 : -1;
+        return 0;
+      });
+      return list;
+    }
+
+    function sortBy(field) {
+      if (sortField === field) sortDir = sortDir === "asc" ? "desc" : "asc";
+      else { sortField = field; sortDir = "desc"; }
+      renderOpsTable();
+    }
+
+    function renderOpsTable() {
+      const list = getFilteredOps();
+      document.getElementById("resultsCount").textContent = `${list.length} resultados`;
+
+      // Sort indicators
+      ["fecha","ticker","cantidad","precio"].forEach(f => {
+        document.getElementById(`sort-${f}`).textContent = sortField === f ? (sortDir === "asc" ? "↑" : "↓") : "";
+      });
+
+      if (list.length === 0) {
+        document.getElementById("opsTableBody").innerHTML = `<tr><td colspan="8" class="empty">No hay operaciones</td></tr>`;
+        return;
+      }
+
+      document.getElementById("opsTableBody").innerHTML = list.map(o => `
+        <tr>
+          <td class="mono">${toDateStr(o.fecha)}</td>
+          <td style="font-weight:600;color:var(--text-primary)">${(o.ticker||"").toUpperCase()}</td>
+          <td><span class="tag tag-${o.tipo}">${o.tipo}</span></td>
+          <td class="mono">${o.cantidad}</td>
+          <td class="mono">${fmt(Number(o.precio))}</td>
+          <td class="hide-mobile"><span class="tag ${catTagClass(o.categoria)}">${o.categoria}</span></td>
+          <td><span class="tag tag-${o.estado}">${o.estado}</span></td>
+          <td>
+            <button class="btn btn-ghost btn-sm" onclick="openEditOp('${o.id}')">✏️</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteOpConfirm('${o.id}')">🗑</button>
+          </td>
+        </tr>
+      `).join("");
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // CRUD: OPERACIONES
+    // ═══════════════════════════════════════════════════════════
+    function openNewOp() {
+      editingOpId = null;
+      document.getElementById("modalTitle").textContent = "Nueva operación";
+      document.getElementById("fTicker").value = "";
+      document.getElementById("fFecha").value = new Date().toISOString().split("T")[0];
+      document.getElementById("fTipo").value = "compra";
+      document.getElementById("fCategoria").value = "cedears/acciones";
+      document.getElementById("fCantidad").value = "";
+      document.getElementById("fPrecio").value = "";
+      document.getElementById("fComision").value = "0";
+      document.getElementById("fEstado").value = "abierta";
+      document.getElementById("fNotas").value = "";
+      document.getElementById("modalOverlay").classList.add("open");
+    }
+
+    function openEditOp(id) {
+      const op = ops.find(o => o.id == id);
+      if (!op) return;
+      editingOpId = id;
+      document.getElementById("modalTitle").textContent = "Editar operación";
+      document.getElementById("fTicker").value = op.ticker || "";
+      document.getElementById("fFecha").value = toDateStr(op.fecha);
+      document.getElementById("fTipo").value = op.tipo || "compra";
+      document.getElementById("fCategoria").value = op.categoria || "cedears/acciones";
+      document.getElementById("fCantidad").value = op.cantidad || "";
+      document.getElementById("fPrecio").value = op.precio || "";
+      document.getElementById("fComision").value = op.comision || 0;
+      document.getElementById("fEstado").value = op.estado || "abierta";
+      document.getElementById("fNotas").value = op.notas || "";
+      document.getElementById("modalOverlay").classList.add("open");
+    }
+
+    function closeModal() {
+      document.getElementById("modalOverlay").classList.remove("open");
+      editingOpId = null;
+    }
+
+    async function saveOp() {
+      const opData = {
+        id: editingOpId || uid(),
+        ticker: document.getElementById("fTicker").value.trim(),
+        categoria: document.getElementById("fCategoria").value,
+        tipo: document.getElementById("fTipo").value,
+        cantidad: Number(document.getElementById("fCantidad").value) || 0,
+        precio: Number(document.getElementById("fPrecio").value) || 0,
+        fecha: document.getElementById("fFecha").value,
+        comision: Number(document.getElementById("fComision").value) || 0,
+        estado: document.getElementById("fEstado").value,
+        notas: document.getElementById("fNotas").value.trim()
+      };
+
+      if (!opData.ticker) { toast("Falta el ticker", "error"); return; }
+
+      if (editingOpId) {
+        const idx = ops.findIndex(o => o.id == editingOpId);
+        if (idx >= 0) ops[idx] = opData;
+        if (isConfigured()) await apiPost("updateOp", opData);
+        toast("Operación actualizada");
+      } else {
+        ops.push(opData);
+        if (isConfigured()) await apiPost("addOp", opData);
+        toast("Operación agregada");
+      }
+
+      saveLocal();
+      closeModal();
+      renderCurrentView();
+    }
+
+    async function deleteOpConfirm(id) {
+      if (!confirm("¿Eliminar esta operación?")) return;
+      ops = ops.filter(o => o.id != id);
+      if (isConfigured()) await apiDelete("deleteOp", id);
+      saveLocal();
+      toast("Operación eliminada");
+      renderCurrentView();
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // RENDER: ANÁLISIS
+    // ═══════════════════════════════════════════════════════════
+    function renderAnalysis() {
+      // Category filter buttons
+      const cats = ["todas", ...Object.keys(catColor)];
+      document.getElementById("analysisCatFilter").innerHTML = cats.map(c => {
+        const isActive = analysisCat === c;
+        const style = isActive && c !== "todas" ? `background:${catColor[c]};color:#06090f;` : "";
+        return `<button class="btn ${isActive ? 'btn-primary' : 'btn-ghost'}" style="${style}" onclick="setAnalysisCat('${c}')">${c}</button>`;
+      }).join("");
+
+      const title = analysisCat === "todas" ? "Inversión acumulada" : `Inversión acumulada — ${analysisCat}`;
+      document.getElementById("analysisTitle").textContent = title;
+
+      const filtered = ops.filter(o => o.tipo === "compra" && (analysisCat === "todas" || o.categoria === analysisCat));
+      const monthly = {};
+      filtered.forEach(o => {
+        const d = toDateStr(o.fecha); if (!d) return;
+        const key = d.substring(0,7);
+        monthly[key] = (monthly[key]||0) + (Number(o.cantidad)||0)*(Number(o.precio)||0);
+      });
+      const months = Object.keys(monthly).sort();
+      let cum = 0;
+      const cumData = months.map(m => { cum += monthly[m]; return Math.round(cum); });
+      const color = analysisCat !== "todas" ? catColor[analysisCat] : "#00d4aa";
+
+      destroyChart("chartAnalysis");
+      if (months.length > 0) {
+        charts.chartAnalysis = new Chart(document.getElementById("chartAnalysis"), {
+          type: "line",
+          data: {
+            labels: months,
+            datasets: [{ label:"Acumulado", data:cumData, borderColor:color, backgroundColor:color+"18", fill:true, tension:0.3, pointRadius:3, borderWidth:2 }]
+          },
+          options: chartOpts()
+        });
+      }
+
+      // Yearly
+      const yearly = {};
+      ops.forEach(o => {
+        const d = toDateStr(o.fecha); if (!d) return;
+        const year = d.substring(0,4);
+        if (!yearly[year]) yearly[year] = { compras:0, ventas:0 };
+        const m = (Number(o.cantidad)||0)*(Number(o.precio)||0);
+        if (o.tipo === "compra") yearly[year].compras += m; else yearly[year].ventas += m;
+      });
+      const years = Object.keys(yearly).sort();
+
+      destroyChart("chartYearly");
+      if (years.length > 0) {
+        charts.chartYearly = new Chart(document.getElementById("chartYearly"), {
+          type: "bar",
+          data: {
+            labels: years,
+            datasets: [
+              { label:"Compras", data:years.map(y => Math.round(yearly[y].compras)), backgroundColor:"#00d4aa", borderRadius:4 },
+              { label:"Ventas", data:years.map(y => Math.round(yearly[y].ventas)), backgroundColor:"#a78bfa", borderRadius:4 }
+            ]
+          },
+          options: chartOpts()
+        });
+      }
+    }
+
+    function setAnalysisCat(c) {
+      analysisCat = c;
+      renderAnalysis();
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // RENDER: ALERTAS
+    // ═══════════════════════════════════════════════════════════
+    function renderAlerts() {
+      // Populate datalist
+      const tickers = [...new Set(ops.map(o => (o.ticker||"").toUpperCase()).filter(Boolean))].sort();
+      document.getElementById("tickerListData").innerHTML = tickers.map(t => `<option value="${t}">`).join("");
+
+      document.getElementById("alertsTitle").textContent = `Mis alertas (${alerts.length})`;
+
+      if (alerts.length === 0) {
+        document.getElementById("alertsList").innerHTML = `<div class="empty">No hay alertas configuradas</div>`;
+        return;
+      }
+
+      document.getElementById("alertsList").innerHTML = alerts.map(a => `
+        <div class="alert-item ${a.activa === false ? 'inactive' : ''}" style="margin-bottom:8px;">
+          <span style="font-size:16px">${a.condicion === "above" ? "📈" : "📉"}</span>
+          <span class="mono" style="font-weight:600;color:var(--text-primary)">${(a.ticker||"").toUpperCase()}</span>
+          <span style="color:var(--text-secondary);font-size:13px">${a.condicion === "above" ? "sube por encima de" : "baja por debajo de"}</span>
+          <span class="mono" style="color:var(--accent);font-weight:600">${fmt(Number(a.precio))}</span>
+          <div class="alert-actions">
+            <button class="btn btn-ghost btn-sm" onclick="toggleAlert('${a.id}')">${a.activa !== false ? 'Pausar' : 'Activar'}</button>
+            <button class="btn btn-danger btn-sm" onclick="removeAlert('${a.id}')">✕</button>
+          </div>
+        </div>
+      `).join("");
+    }
+
+    async function addAlert() {
+      const ticker = document.getElementById("alertTicker").value.trim().toUpperCase();
+      const condition = document.getElementById("alertCondition").value;
+      const price = Number(document.getElementById("alertPrice").value);
+      if (!ticker || !price) { toast("Completá ticker y precio", "error"); return; }
+
+      const alert = { id: uid(), ticker, condicion: condition, precio: price, activa: true, creadoEn: new Date().toISOString() };
+      alerts.push(alert);
+      if (isConfigured()) await apiPost("addAlert", alert);
+      saveLocal();
+      toast("Alerta agregada");
+      document.getElementById("alertTicker").value = "";
+      document.getElementById("alertPrice").value = "";
+      renderAlerts();
+    }
+
+    async function toggleAlert(id) {
+      const a = alerts.find(x => x.id == id);
+      if (!a) return;
+      a.activa = !a.activa;
+      if (isConfigured()) await apiPost("updateAlert", a);
+      saveLocal();
+      renderAlerts();
+    }
+
+    async function removeAlert(id) {
+      alerts = alerts.filter(a => a.id != id);
+      if (isConfigured()) await apiDelete("deleteAlert", id);
+      saveLocal();
+      toast("Alerta eliminada");
+      renderAlerts();
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // RENDER: REPORTES P&L
+    // ═══════════════════════════════════════════════════════════
+    function renderReports() {
+      const tickerMap = {};
+      ops.forEach(o => {
+        const t = (o.ticker||"").toUpperCase(); if (!t) return;
+        if (!tickerMap[t]) tickerMap[t] = { ticker:t, categoria:o.categoria, totalCompra:0, cantCompra:0, totalVenta:0, cantVenta:0, comisiones:0 };
+        const m = (Number(o.cantidad)||0)*(Number(o.precio)||0);
+        tickerMap[t].comisiones += Number(o.comision)||0;
+        if (o.tipo === "compra") { tickerMap[t].totalCompra += m; tickerMap[t].cantCompra += Number(o.cantidad)||0; }
+        else { tickerMap[t].totalVenta += m; tickerMap[t].cantVenta += Number(o.cantidad)||0; }
+      });
+
+      const pnl = Object.values(tickerMap).map(t => {
+        const realizado = t.totalVenta - (t.cantVenta > 0 && t.cantCompra > 0 ? (t.totalCompra / t.cantCompra) * t.cantVenta : 0) - t.comisiones;
+        const posAbierta = t.cantCompra - t.cantVenta;
+        const ppc = t.cantCompra > 0 ? t.totalCompra / t.cantCompra : 0;
+        return { ...t, realizado, posAbierta, ppc };
+      }).sort((a,b) => b.totalCompra - a.totalCompra);
+
+      const totalRealizado = pnl.reduce((s,p) => s + p.realizado, 0);
+      const totalComisiones = ops.reduce((s,o) => s + (Number(o.comision)||0), 0);
+
+      document.getElementById("reportKpis").innerHTML = [
+        { label:"P&L Realizado Total", value:fmt(totalRealizado), color:totalRealizado >= 0 ? "var(--accent)" : "var(--red)" },
+        { label:"Tickers operados", value:pnl.length, color:"var(--text-primary)" },
+        { label:"Total comisiones", value:fmt(totalComisiones), color:"var(--pink)" }
+      ].map(k => `
+        <div class="card kpi">
+          <div class="kpi-label">${k.label}</div>
+          <div class="kpi-value" style="color:${k.color}">${k.value}</div>
+        </div>
+      `).join("");
+
+      if (pnl.length === 0) {
+        document.getElementById("pnlTableBody").innerHTML = `<tr><td colspan="7" class="empty">Sin datos para reporte</td></tr>`;
+        return;
+      }
+
+      document.getElementById("pnlTableBody").innerHTML = pnl.map(p => `
+        <tr>
+          <td style="font-weight:600;color:var(--text-primary)">${p.ticker}</td>
+          <td><span class="tag ${catTagClass(p.categoria)}">${p.categoria}</span></td>
+          <td class="mono">${fmt(p.totalCompra)}</td>
+          <td class="mono">${fmt(p.totalVenta)}</td>
+          <td class="mono">${fmt(p.ppc)}</td>
+          <td class="mono hide-mobile">${p.posAbierta > 0 ? p.posAbierta.toLocaleString() : "-"}</td>
+          <td class="mono ${p.realizado >= 0 ? 'positive' : 'negative'}" style="font-weight:600">${fmt(p.realizado)}</td>
+        </tr>
+      `).join("");
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // RENDER ROUTER
+    // ═══════════════════════════════════════════════════════════
+    function renderCurrentView() {
+      document.getElementById("opsCount").textContent = `${ops.length} ops`;
+      switch(currentView) {
+        case "dashboard": renderDashboard(); break;
+        case "operaciones": renderOpsTable(); break;
+        case "analisis": renderAnalysis(); break;
+        case "alertas": renderAlerts(); break;
+        case "reportes": renderReports(); break;
+      }
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // INIT
+    // ═══════════════════════════════════════════════════════════
+    async function init() {
+      if (!isConfigured()) {
+        document.getElementById("configBanner").style.display = "block";
+        setStatus("offline", "Modo local (sin Google Sheets)");
+      }
+
+      await loadData();
+
+      document.getElementById("loadingScreen").style.display = "none";
+      document.getElementById("app").style.display = "block";
+
+      renderCurrentView();
+    }
+
+    init();
+  </script>
+</body>
+</html>
