@@ -584,13 +584,14 @@
       if (!isConfigured()) return null;
       setStatus("syncing", "Sincronizando...");
       try {
-        const r = await fetch(`${API_URL}?action=${action}`);
+        const r = await fetch(`${API_URL}?action=${action}`, { redirect: "follow" });
         const data = await r.json();
         setStatus("online", "Conectado");
         return data;
       } catch(e) {
         setStatus("offline", "Sin conexión");
         toast("Error de conexión", "error");
+        console.error("apiGet error:", e);
         return null;
       }
     }
@@ -599,10 +600,11 @@
       if (!isConfigured()) return null;
       setStatus("syncing", "Guardando...");
       try {
-        const r = await fetch(`${API_URL}?action=${action}`, {
+        const r = await fetch(API_URL, {
           method: "POST",
+          redirect: "follow",
           headers: { "Content-Type": "text/plain" },
-          body: JSON.stringify(body)
+          body: JSON.stringify({ action: action, data: body })
         });
         const data = await r.json();
         setStatus("online", "Conectado");
@@ -610,6 +612,7 @@
       } catch(e) {
         setStatus("offline", "Sin conexión");
         toast("Error al guardar", "error");
+        console.error("apiPost error:", e);
         return null;
       }
     }
@@ -618,13 +621,14 @@
       if (!isConfigured()) return null;
       setStatus("syncing", "Eliminando...");
       try {
-        const r = await fetch(`${API_URL}?action=${action}&id=${id}`);
+        const r = await fetch(`${API_URL}?action=${action}&id=${id}`, { redirect: "follow" });
         const data = await r.json();
         setStatus("online", "Conectado");
         return data;
       } catch(e) {
         setStatus("offline", "Sin conexión");
         toast("Error al eliminar", "error");
+        console.error("apiDelete error:", e);
         return null;
       }
     }
