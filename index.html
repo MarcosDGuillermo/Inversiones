@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8">
+<!-- saved from url=(0047)https://marcosdguillermo.github.io/Inversiones/ -->
+<html lang="es"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Inversiones</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com/">
+  <link href="./Inversiones_files/css2" rel="stylesheet">
+  <script src="./Inversiones_files/chart.umd.min.js.descarga"></script>
   <style>
     /* ═══ RESET & VARS ═══ */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -283,20 +283,20 @@
 <body>
 
   <!-- LOADING -->
-  <div id="loadingScreen" class="loading-screen">
+  <div id="loadingScreen" class="loading-screen" style="display: none;">
     <div class="loading-dot">◉</div>
     <div style="color: var(--text-secondary); font-size: 14px;">Conectando con Google Sheets...</div>
   </div>
 
   <!-- APP (hidden until loaded) -->
-  <div id="app" style="display:none;">
+  <div id="app" style="display: block;">
 
     <!-- HEADER -->
     <header class="header">
       <div class="logo">
         <div class="logo-mark">◉</div>
         <span class="logo-text">Inversiones</span>
-        <span class="logo-badge" id="opsCount">0 ops</span>
+        <span class="logo-badge" id="opsCount">1 ops</span>
       </div>
       <nav class="nav">
         <button class="nav-btn active" data-view="dashboard"><span class="nav-icon">📊</span><span class="nav-label">Dashboard</span></button>
@@ -304,6 +304,7 @@
         <button class="nav-btn" data-view="analisis"><span class="nav-icon">📈</span><span class="nav-label">Análisis</span></button>
         <button class="nav-btn" data-view="alertas"><span class="nav-icon">🔔</span><span class="nav-label">Alertas</span></button>
         <button class="nav-btn" data-view="reportes"><span class="nav-icon">📋</span><span class="nav-label">Reportes</span></button>
+        <button class="nav-btn" data-view="brokers"><span class="nav-icon">🏦</span><span class="nav-label">Brokers</span></button>
       </nav>
     </header>
 
@@ -317,20 +318,56 @@
 
       <!-- ═══ DASHBOARD ═══ -->
       <div id="view-dashboard" class="view active">
-        <div class="kpi-grid" id="kpiGrid"></div>
+        <div class="kpi-grid" id="kpiGrid">
+        <div class="card kpi">
+          <div class="kpi-accent" style="background:var(--accent)"></div>
+          <div class="kpi-label">Total invertido</div>
+          <div class="kpi-value">$&nbsp;150</div>
+        </div>
+      
+        <div class="card kpi">
+          <div class="kpi-accent" style="background:var(--purple)"></div>
+          <div class="kpi-label">Total vendido</div>
+          <div class="kpi-value">$&nbsp;0</div>
+        </div>
+      
+        <div class="card kpi">
+          <div class="kpi-accent" style="background:var(--pink)"></div>
+          <div class="kpi-label">Comisiones</div>
+          <div class="kpi-value">$&nbsp;0</div>
+        </div>
+      
+        <div class="card kpi">
+          <div class="kpi-accent" style="background:var(--blue)"></div>
+          <div class="kpi-label">Operaciones</div>
+          <div class="kpi-value">1</div>
+        </div>
+      
+        <div class="card kpi">
+          <div class="kpi-accent" style="background:var(--orange)"></div>
+          <div class="kpi-label">Abiertas</div>
+          <div class="kpi-value">1</div>
+        </div>
+      
+        <div class="card kpi">
+          <div class="kpi-accent" style="background:var(--purple)"></div>
+          <div class="kpi-label">Cerradas</div>
+          <div class="kpi-value">0</div>
+        </div>
+      </div>
         <div class="charts-row">
           <div class="card">
             <div class="card-title">Evolución mensual</div>
-            <div class="chart-wrap"><canvas id="chartEvolution"></canvas></div>
+            <div class="chart-wrap"><canvas id="chartEvolution" width="714" height="260" style="display: block; box-sizing: border-box; height: 260px; width: 714px;"></canvas></div>
           </div>
           <div class="card">
             <div class="card-title">Por categoría</div>
-            <div class="chart-wrap"><canvas id="chartCategories"></canvas></div>
+            <div class="chart-wrap"><canvas id="chartCategories" width="336" height="260" style="display: block; box-sizing: border-box; height: 260px; width: 336px;"></canvas></div>
           </div>
         </div>
         <div class="card">
           <div class="card-title">Top 10 Tickers</div>
-          <div class="chart-wrap" style="height:280px;"><canvas id="chartTickers"></canvas></div>
+          <div class="chart-wrap" style="height:280px;"><canvas id="chartTickers" width="1106" height="280" style="display: block; box-sizing: border-box; height: 280px; width: 1106px;"></canvas></div>
         </div>
       </div>
 
@@ -360,11 +397,11 @@
             <table>
               <thead>
                 <tr>
-                  <th onclick="sortBy('fecha')">Fecha <span id="sort-fecha"></span></th>
-                  <th onclick="sortBy('ticker')">Ticker <span id="sort-ticker"></span></th>
+                  <th onclick="sortBy(&#39;fecha&#39;)">Fecha <span id="sort-fecha"></span></th>
+                  <th onclick="sortBy(&#39;ticker&#39;)">Ticker <span id="sort-ticker"></span></th>
                   <th>Tipo</th>
-                  <th onclick="sortBy('cantidad')">Cant. <span id="sort-cantidad"></span></th>
-                  <th onclick="sortBy('precio')">Precio <span id="sort-precio"></span></th>
+                  <th onclick="sortBy(&#39;cantidad&#39;)">Cant. <span id="sort-cantidad"></span></th>
+                  <th onclick="sortBy(&#39;precio&#39;)">Precio <span id="sort-precio"></span></th>
                   <th class="hide-mobile">Categoría</th>
                   <th>Estado</th>
                   <th style="width:80px">Acc.</th>
@@ -423,7 +460,7 @@
       <div id="view-reportes" class="view">
         <div class="kpi-grid" id="reportKpis"></div>
         <div class="card">
-          <div class="card-title">P&L por Ticker</div>
+          <div class="card-title">P&amp;L por Ticker</div>
           <div class="table-wrap">
             <table>
               <thead>
@@ -434,10 +471,43 @@
                   <th>Total venta</th>
                   <th>Precio prom.</th>
                   <th class="hide-mobile">Pos. abierta</th>
-                  <th>P&L realizado</th>
+                  <th>P&amp;L realizado</th>
                 </tr>
               </thead>
               <tbody id="pnlTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ BROKERS ═══ -->
+      <div id="view-brokers" class="view">
+        <div class="toolbar">
+          <button class="btn btn-primary" onclick="openNewBroker()">+ Nuevo broker</button>
+          <input type="text" id="searchBroker" placeholder="Buscar broker..." oninput="renderBrokersTable()">
+          <select id="filterBrokerTipo" onchange="renderBrokersTable()">
+            <option value="todos">Todos los tipos</option>
+            <option value="broker">Broker</option>
+            <option value="exchange">Exchange</option>
+            <option value="banco">Banco</option>
+            <option value="billetera">Billetera</option>
+          </select>
+          <span class="toolbar-count" id="brokersCount"></span>
+        </div>
+        <div class="card">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Nombre</th>
+                  <th>Tipo</th>
+                  <th>Moneda</th>
+                  <th>Comisión</th>
+                  <th class="hide-mobile">Operaciones</th>
+                  <th style="width:80px">Acc.</th>
+                </tr>
+              </thead>
+              <tbody id="brokersTableBody"></tbody>
             </table>
           </div>
         </div>
@@ -507,6 +577,45 @@
       </div>
     </div>
 
+    <!-- MODAL BROKER -->
+    <div class="modal-overlay" id="modalBrokerOverlay" onclick="if(event.target===this)closeBrokerModal()">
+      <div class="modal">
+        <div class="modal-title" id="modalBrokerTitle">Nuevo broker</div>
+        <div class="form-grid">
+          <div class="form-full">
+            <label>Nombre</label>
+            <input type="text" id="fBrokerNombre" placeholder="Binance, Balanz, Lemon...">
+          </div>
+          <div>
+            <label>Tipo</label>
+            <select id="fBrokerTipo">
+              <option value="broker">Broker</option>
+              <option value="exchange">Exchange</option>
+              <option value="banco">Banco</option>
+              <option value="billetera">Billetera</option>
+            </select>
+          </div>
+          <div>
+            <label>Moneda</label>
+            <select id="fBrokerMoneda">
+              <option value="ARS">ARS</option>
+              <option value="USD">USD</option>
+              <option value="USDT">USDT</option>
+              <option value="multi">Multi</option>
+            </select>
+          </div>
+          <div class="form-full">
+            <label>Comisión típica (decimal, ej: 0.001 = 0.1%)</label>
+            <input type="number" id="fBrokerComision" step="any" min="0" max="1" value="0">
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-ghost" onclick="closeBrokerModal()">Cancelar</button>
+          <button class="btn btn-primary" id="btnSaveBroker" onclick="saveBroker()">Guardar</button>
+        </div>
+      </div>
+    </div>
+
     <!-- STATUS BAR -->
     <div class="status-bar">
       <div class="status-dot" id="statusDot"></div>
@@ -528,10 +637,12 @@
     // ═══════════════════════════════════════════════════════════
     let ops = [];
     let alerts = [];
+    let brokers = [];
     let currentView = "dashboard";
     let sortField = "fecha";
     let sortDir = "desc";
     let editingOpId = null;
+    let editingBrokerId = null;
     let analysisCat = "todas";
     let charts = {};
     const isConfigured = () => API_URL && API_URL.length > 10;
@@ -651,9 +762,15 @@
 
     async function loadData() {
       if (isConfigured()) {
-        const [opsData, alertsData] = await Promise.all([apiGet("getOps"), apiGet("getAlerts")]);
+        const [opsData, alertsData, brokersData] = await Promise.all([
+          apiGet("getOps"),
+          apiGet("getAlerts"),
+          apiGet("getBrokers")
+        ]);
         if (opsData && opsData.ops) ops = opsData.ops;
         if (alertsData && alertsData.alerts) alerts = alertsData.alerts;
+        // getBrokers devuelve un array directo
+        if (Array.isArray(brokersData)) brokers = brokersData;
         saveLocal(); // cache locally too
       } else {
         loadLocal();
@@ -935,6 +1052,143 @@
     }
 
     // ═══════════════════════════════════════════════════════════
+    // BROKERS: RENDER + CRUD
+    // ═══════════════════════════════════════════════════════════
+    const tipoBrokerLabel = {
+      broker: "Broker", exchange: "Exchange", banco: "Banco", billetera: "Billetera"
+    };
+
+    function countOpsForBroker(brokerId) {
+      return ops.filter(o => o.broker_id === brokerId).length;
+    }
+
+    function renderBrokersTable() {
+      const search = (document.getElementById("searchBroker").value || "").toLowerCase();
+      const filterTipo = document.getElementById("filterBrokerTipo").value;
+
+      let list = brokers.filter(b => {
+        if (search && !(b.nombre || "").toLowerCase().includes(search)) return false;
+        if (filterTipo !== "todos" && b.tipo !== filterTipo) return false;
+        return true;
+      });
+
+      // Ordenar alfabéticamente por nombre
+      list.sort((a, b) => (a.nombre || "").localeCompare(b.nombre || ""));
+
+      document.getElementById("brokersCount").textContent = `${list.length} resultados`;
+
+      const tbody = document.getElementById("brokersTableBody");
+      if (list.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="empty">No hay brokers cargados. Hacé click en "+ Nuevo broker" para empezar.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = list.map(b => {
+        const comisionPct = ((b.comision_tipica || 0) * 100).toFixed(3).replace(/\.?0+$/, "") + "%";
+        const opsCount = countOpsForBroker(b.id);
+        return `
+          <tr>
+            <td><strong>${b.nombre || "-"}</strong></td>
+            <td>${tipoBrokerLabel[b.tipo] || b.tipo || "-"}</td>
+            <td>${b.moneda || "-"}</td>
+            <td>${comisionPct}</td>
+            <td class="hide-mobile">${opsCount}</td>
+            <td>
+              <button class="btn btn-sm btn-ghost" onclick="openEditBroker('${b.id}')" title="Editar">✏️</button>
+              <button class="btn btn-sm btn-danger" onclick="deleteBrokerConfirm('${b.id}')" title="Eliminar">🗑️</button>
+            </td>
+          </tr>
+        `;
+      }).join("");
+    }
+
+    function openNewBroker() {
+      editingBrokerId = null;
+      document.getElementById("modalBrokerTitle").textContent = "Nuevo broker";
+      document.getElementById("fBrokerNombre").value = "";
+      document.getElementById("fBrokerTipo").value = "broker";
+      document.getElementById("fBrokerMoneda").value = "ARS";
+      document.getElementById("fBrokerComision").value = "0";
+      document.getElementById("modalBrokerOverlay").classList.add("open");
+    }
+
+    function openEditBroker(id) {
+      const b = brokers.find(x => x.id === id);
+      if (!b) return;
+      editingBrokerId = id;
+      document.getElementById("modalBrokerTitle").textContent = "Editar broker";
+      document.getElementById("fBrokerNombre").value = b.nombre || "";
+      document.getElementById("fBrokerTipo").value = b.tipo || "broker";
+      document.getElementById("fBrokerMoneda").value = b.moneda || "ARS";
+      document.getElementById("fBrokerComision").value = b.comision_tipica || 0;
+      document.getElementById("modalBrokerOverlay").classList.add("open");
+    }
+
+    function closeBrokerModal() {
+      document.getElementById("modalBrokerOverlay").classList.remove("open");
+      editingBrokerId = null;
+    }
+
+    async function saveBroker() {
+      const data = {
+        nombre: document.getElementById("fBrokerNombre").value.trim(),
+        tipo: document.getElementById("fBrokerTipo").value,
+        moneda: document.getElementById("fBrokerMoneda").value,
+        comision_tipica: Number(document.getElementById("fBrokerComision").value) || 0
+      };
+
+      if (!data.nombre) { toast("Falta el nombre", "error"); return; }
+
+      if (editingBrokerId) {
+        // UPDATE
+        const result = await apiPost("updateBroker", { id: editingBrokerId, ...data });
+        if (result && result.ok) {
+          const idx = brokers.findIndex(b => b.id === editingBrokerId);
+          if (idx >= 0) brokers[idx] = result.broker;
+          toast("Broker actualizado");
+        } else {
+          const err = result && result.errors ? result.errors.join(", ") : "Error al actualizar";
+          toast(err, "error");
+          return;
+        }
+      } else {
+        // CREATE
+        const result = await apiPost("createBroker", data);
+        if (result && result.ok) {
+          brokers.push(result.broker);
+          toast("Broker creado");
+        } else {
+          const err = result && result.errors ? result.errors.join(", ") : "Error al crear";
+          toast(err, "error");
+          return;
+        }
+      }
+
+      closeBrokerModal();
+      renderBrokersTable();
+    }
+
+    async function deleteBrokerConfirm(id) {
+      const b = brokers.find(x => x.id === id);
+      if (!b) return;
+      const opsCount = countOpsForBroker(id);
+      let msg = `¿Eliminar el broker "${b.nombre}"?`;
+      if (opsCount > 0) {
+        msg += `\n\n⚠️ Tiene ${opsCount} operación(es) asociada(s). Se marcará como inactivo pero los históricos se mantienen.`;
+      }
+      if (!confirm(msg)) return;
+
+      const result = await apiDelete("deleteBroker", id);
+      if (result && result.ok) {
+        brokers = brokers.filter(x => x.id !== id);
+        toast("Broker eliminado");
+        renderBrokersTable();
+      } else {
+        toast("Error al eliminar", "error");
+      }
+    }
+
+    // ═══════════════════════════════════════════════════════════
     // RENDER: ANÁLISIS
     // ═══════════════════════════════════════════════════════════
     function renderAnalysis() {
@@ -1131,6 +1385,7 @@
         case "analisis": renderAnalysis(); break;
         case "alertas": renderAlerts(); break;
         case "reportes": renderReports(); break;
+        case "brokers": renderBrokersTable(); break;
       }
     }
 
@@ -1153,5 +1408,6 @@
 
     init();
   </script>
-</body>
-</html>
+
+
+</body></html>
