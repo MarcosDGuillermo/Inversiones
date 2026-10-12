@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<!-- saved from url=(0047)https://marcosdguillermo.github.io/Inversiones/ -->
-<html lang="es"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-  
+<html lang="es"><head>
+  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Inversiones</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com/">
-  <link href="./Inversiones_files/css2" rel="stylesheet">
-  <script src="./Inversiones_files/chart.umd.min.js.descarga"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
   <style>
     /* ═══ RESET & VARS ═══ */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -283,20 +283,20 @@
 <body>
 
   <!-- LOADING -->
-  <div id="loadingScreen" class="loading-screen" style="display: none;">
+  <div id="loadingScreen" class="loading-screen">
     <div class="loading-dot">◉</div>
     <div style="color: var(--text-secondary); font-size: 14px;">Conectando con Google Sheets...</div>
   </div>
 
   <!-- APP (hidden until loaded) -->
-  <div id="app" style="display: block;">
+  <div id="app" style="display: none;">
 
     <!-- HEADER -->
     <header class="header">
       <div class="logo">
         <div class="logo-mark">◉</div>
         <span class="logo-text">Inversiones</span>
-        <span class="logo-badge" id="opsCount">1 ops</span>
+        <span class="logo-badge" id="opsCount">0 ops</span>
       </div>
       <nav class="nav">
         <button class="nav-btn active" data-view="dashboard"><span class="nav-icon">📊</span><span class="nav-label">Dashboard</span></button>
@@ -319,55 +319,20 @@
       <!-- ═══ DASHBOARD ═══ -->
       <div id="view-dashboard" class="view active">
         <div class="kpi-grid" id="kpiGrid">
-        <div class="card kpi">
-          <div class="kpi-accent" style="background:var(--accent)"></div>
-          <div class="kpi-label">Total invertido</div>
-          <div class="kpi-value">$&nbsp;150</div>
         </div>
-      
-        <div class="card kpi">
-          <div class="kpi-accent" style="background:var(--purple)"></div>
-          <div class="kpi-label">Total vendido</div>
-          <div class="kpi-value">$&nbsp;0</div>
-        </div>
-      
-        <div class="card kpi">
-          <div class="kpi-accent" style="background:var(--pink)"></div>
-          <div class="kpi-label">Comisiones</div>
-          <div class="kpi-value">$&nbsp;0</div>
-        </div>
-      
-        <div class="card kpi">
-          <div class="kpi-accent" style="background:var(--blue)"></div>
-          <div class="kpi-label">Operaciones</div>
-          <div class="kpi-value">1</div>
-        </div>
-      
-        <div class="card kpi">
-          <div class="kpi-accent" style="background:var(--orange)"></div>
-          <div class="kpi-label">Abiertas</div>
-          <div class="kpi-value">1</div>
-        </div>
-      
-        <div class="card kpi">
-          <div class="kpi-accent" style="background:var(--purple)"></div>
-          <div class="kpi-label">Cerradas</div>
-          <div class="kpi-value">0</div>
-        </div>
-      </div>
         <div class="charts-row">
           <div class="card">
             <div class="card-title">Evolución mensual</div>
-            <div class="chart-wrap"><canvas id="chartEvolution" width="714" height="260" style="display: block; box-sizing: border-box; height: 260px; width: 714px;"></canvas></div>
+            <div class="chart-wrap"><canvas id="chartEvolution"></canvas></div>
           </div>
           <div class="card">
             <div class="card-title">Por categoría</div>
-            <div class="chart-wrap"><canvas id="chartCategories" width="336" height="260" style="display: block; box-sizing: border-box; height: 260px; width: 336px;"></canvas></div>
+            <div class="chart-wrap"><canvas id="chartCategories"></canvas></div>
           </div>
         </div>
         <div class="card">
           <div class="card-title">Top 10 Tickers</div>
-          <div class="chart-wrap" style="height:280px;"><canvas id="chartTickers" width="1106" height="280" style="display: block; box-sizing: border-box; height: 280px; width: 1106px;"></canvas></div>
+          <div class="chart-wrap" style="height:280px;"><canvas id="chartTickers"></canvas></div>
         </div>
       </div>
 
@@ -664,11 +629,21 @@
       return "";
     };
     const catColor = { crypto:"#fb923c", "cedears/acciones":"#00d4aa", bonos:"#a78bfa", "plazo fijo/FCI":"#f472b6", cauciones:"#38bdf8" };
+    const pad2 = (n) => String(n).padStart(2, "0");
+    const localDateStr = (d = new Date()) => `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
     const toDateStr = (d) => {
       if (!d) return "";
       if (typeof d === "string") return d.split("T")[0];
-      if (d instanceof Date) return d.toISOString().split("T")[0];
+      if (d instanceof Date) return localDateStr(d);
       return String(d);
+    };
+    // Escapa texto de usuario antes de meterlo en innerHTML
+    const esc = (v) => String(v ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]));
+    const fmtCompact = (v) => {
+      const a = Math.abs(v);
+      if (a >= 1e6) return (v/1e6).toFixed(a >= 1e7 ? 0 : 1) + "M";
+      if (a >= 1e3) return (v/1e3).toFixed(a >= 1e4 ? 0 : 1) + "k";
+      return String(v);
     };
 
     // ═══════════════════════════════════════════════════════════
@@ -756,8 +731,10 @@
     }
 
     function saveLocal() {
-      localStorage.setItem("inv_ops", JSON.stringify(ops));
-      localStorage.setItem("inv_alerts", JSON.stringify(alerts));
+      try {
+        localStorage.setItem("inv_ops", JSON.stringify(ops));
+        localStorage.setItem("inv_alerts", JSON.stringify(alerts));
+      } catch(e) { console.warn("localStorage no disponible", e); }
     }
 
     async function loadData() {
@@ -767,11 +744,15 @@
           apiGet("getAlerts"),
           apiGet("getBrokers")
         ]);
-        if (opsData && opsData.ops) ops = opsData.ops;
-        if (alertsData && alertsData.alerts) alerts = alertsData.alerts;
+        loadLocal(); // base: cache local, por si la API falla
+        const opsOk = !!(opsData && opsData.ops);
+        const alertsOk = !!(alertsData && alertsData.alerts);
+        if (opsOk) ops = opsData.ops;
+        if (alertsOk) alerts = alertsData.alerts;
         // getBrokers devuelve un array directo
         if (Array.isArray(brokersData)) brokers = brokersData;
-        saveLocal(); // cache locally too
+        if (opsOk && alertsOk) saveLocal(); // solo cachear datos reales
+        else toast("No se pudo sincronizar; mostrando datos locales", "error");
       } else {
         loadLocal();
       }
@@ -901,7 +882,7 @@
         responsive:true, maintainAspectRatio:false,
         scales: {
           x:{ ticks:{ color:"#4a5568", font:{size:10} }, grid:{ color:"rgba(255,255,255,0.03)" } },
-          y:{ ticks:{ color:"#4a5568", font:{size:10}, callback:v=>(v/1000).toFixed(0)+"k" }, grid:{ color:"rgba(255,255,255,0.03)" } }
+          y:{ ticks:{ color:"#4a5568", font:{size:10}, callback:v=>fmtCompact(v) }, grid:{ color:"rgba(255,255,255,0.03)" } }
         },
         plugins: { legend:{ labels:{ color:"#8892a4", font:{size:11} } }, tooltip:{ backgroundColor:"#1e293b", titleColor:"#f1f5f9", bodyColor:"#f1f5f9", borderColor:"rgba(255,255,255,0.1)", borderWidth:1 } }
       };
@@ -956,15 +937,15 @@
       document.getElementById("opsTableBody").innerHTML = list.map(o => `
         <tr>
           <td class="mono">${toDateStr(o.fecha)}</td>
-          <td style="font-weight:600;color:var(--text-primary)">${(o.ticker||"").toUpperCase()}</td>
-          <td><span class="tag tag-${o.tipo}">${o.tipo}</span></td>
-          <td class="mono">${o.cantidad}</td>
+          <td style="font-weight:600;color:var(--text-primary)">${esc((o.ticker||"").toUpperCase())}</td>
+          <td><span class="tag tag-${esc(o.tipo)}">${esc(o.tipo)}</span></td>
+          <td class="mono">${esc(o.cantidad)}</td>
           <td class="mono">${fmt(Number(o.precio))}</td>
-          <td class="hide-mobile"><span class="tag ${catTagClass(o.categoria)}">${o.categoria}</span></td>
-          <td><span class="tag tag-${o.estado}">${o.estado}</span></td>
+          <td class="hide-mobile"><span class="tag ${catTagClass(o.categoria)}">${esc(o.categoria)}</span></td>
+          <td><span class="tag tag-${esc(o.estado)}">${esc(o.estado)}</span></td>
           <td>
-            <button class="btn btn-ghost btn-sm" onclick="openEditOp('${o.id}')">✏️</button>
-            <button class="btn btn-danger btn-sm" onclick="deleteOpConfirm('${o.id}')">🗑</button>
+            <button class="btn btn-ghost btn-sm" onclick="openEditOp('${esc(o.id)}')">✏️</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteOpConfirm('${esc(o.id)}')">🗑</button>
           </td>
         </tr>
       `).join("");
@@ -977,7 +958,7 @@
       editingOpId = null;
       document.getElementById("modalTitle").textContent = "Nueva operación";
       document.getElementById("fTicker").value = "";
-      document.getElementById("fFecha").value = new Date().toISOString().split("T")[0];
+      document.getElementById("fFecha").value = localDateStr();
       document.getElementById("fTipo").value = "compra";
       document.getElementById("fCategoria").value = "cedears/acciones";
       document.getElementById("fCantidad").value = "";
@@ -1025,16 +1006,19 @@
       };
 
       if (!opData.ticker) { toast("Falta el ticker", "error"); return; }
+      if (opData.cantidad <= 0 || opData.precio <= 0) { toast("Cantidad y precio deben ser mayores a 0", "error"); return; }
+      if (!opData.fecha) { toast("Falta la fecha", "error"); return; }
 
+      let synced = true;
       if (editingOpId) {
         const idx = ops.findIndex(o => o.id == editingOpId);
-        if (idx >= 0) ops[idx] = opData;
-        if (isConfigured()) await apiPost("updateOp", opData);
-        toast("Operación actualizada");
+        if (idx >= 0) ops[idx] = { ...ops[idx], ...opData };
+        if (isConfigured()) synced = !!(await apiPost("updateOp", opData));
+        toast(synced ? "Operación actualizada" : "Actualizada solo en este dispositivo (sin sincronizar)", synced ? "success" : "error");
       } else {
         ops.push(opData);
-        if (isConfigured()) await apiPost("addOp", opData);
-        toast("Operación agregada");
+        if (isConfigured()) synced = !!(await apiPost("addOp", opData));
+        toast(synced ? "Operación agregada" : "Agregada solo en este dispositivo (sin sincronizar)", synced ? "success" : "error");
       }
 
       saveLocal();
@@ -1088,14 +1072,14 @@
         const opsCount = countOpsForBroker(b.id);
         return `
           <tr>
-            <td><strong>${b.nombre || "-"}</strong></td>
-            <td>${tipoBrokerLabel[b.tipo] || b.tipo || "-"}</td>
-            <td>${b.moneda || "-"}</td>
+            <td><strong>${esc(b.nombre || "-")}</strong></td>
+            <td>${esc(tipoBrokerLabel[b.tipo] || b.tipo || "-")}</td>
+            <td>${esc(b.moneda || "-")}</td>
             <td>${comisionPct}</td>
             <td class="hide-mobile">${opsCount}</td>
             <td>
-              <button class="btn btn-sm btn-ghost" onclick="openEditBroker('${b.id}')" title="Editar">✏️</button>
-              <button class="btn btn-sm btn-danger" onclick="deleteBrokerConfirm('${b.id}')" title="Eliminar">🗑️</button>
+              <button class="btn btn-sm btn-ghost" onclick="openEditBroker('${esc(b.id)}')" title="Editar">✏️</button>
+              <button class="btn btn-sm btn-danger" onclick="deleteBrokerConfirm('${esc(b.id)}')" title="Eliminar">🗑️</button>
             </td>
           </tr>
         `;
@@ -1265,7 +1249,7 @@
     function renderAlerts() {
       // Populate datalist
       const tickers = [...new Set(ops.map(o => (o.ticker||"").toUpperCase()).filter(Boolean))].sort();
-      document.getElementById("tickerListData").innerHTML = tickers.map(t => `<option value="${t}">`).join("");
+      document.getElementById("tickerListData").innerHTML = tickers.map(t => `<option value="${esc(t)}">`).join("");
 
       document.getElementById("alertsTitle").textContent = `Mis alertas (${alerts.length})`;
 
@@ -1277,12 +1261,12 @@
       document.getElementById("alertsList").innerHTML = alerts.map(a => `
         <div class="alert-item ${a.activa === false ? 'inactive' : ''}" style="margin-bottom:8px;">
           <span style="font-size:16px">${a.condicion === "above" ? "📈" : "📉"}</span>
-          <span class="mono" style="font-weight:600;color:var(--text-primary)">${(a.ticker||"").toUpperCase()}</span>
+          <span class="mono" style="font-weight:600;color:var(--text-primary)">${esc((a.ticker||"").toUpperCase())}</span>
           <span style="color:var(--text-secondary);font-size:13px">${a.condicion === "above" ? "sube por encima de" : "baja por debajo de"}</span>
           <span class="mono" style="color:var(--accent);font-weight:600">${fmt(Number(a.precio))}</span>
           <div class="alert-actions">
-            <button class="btn btn-ghost btn-sm" onclick="toggleAlert('${a.id}')">${a.activa !== false ? 'Pausar' : 'Activar'}</button>
-            <button class="btn btn-danger btn-sm" onclick="removeAlert('${a.id}')">✕</button>
+            <button class="btn btn-ghost btn-sm" onclick="toggleAlert('${esc(a.id)}')">${a.activa !== false ? 'Pausar' : 'Activar'}</button>
+            <button class="btn btn-danger btn-sm" onclick="removeAlert('${esc(a.id)}')">✕</button>
           </div>
         </div>
       `).join("");
@@ -1336,7 +1320,10 @@
       });
 
       const pnl = Object.values(tickerMap).map(t => {
-        const realizado = t.totalVenta - (t.cantVenta > 0 && t.cantCompra > 0 ? (t.totalCompra / t.cantCompra) * t.cantVenta : 0) - t.comisiones;
+        // Solo hay P&L realizado si hubo ventas; sin ventas las comisiones se ven aparte
+        const realizado = t.cantVenta > 0
+          ? t.totalVenta - (t.cantCompra > 0 ? (t.totalCompra / t.cantCompra) * t.cantVenta : 0) - t.comisiones
+          : 0;
         const posAbierta = t.cantCompra - t.cantVenta;
         const ppc = t.cantCompra > 0 ? t.totalCompra / t.cantCompra : 0;
         return { ...t, realizado, posAbierta, ppc };
@@ -1363,8 +1350,8 @@
 
       document.getElementById("pnlTableBody").innerHTML = pnl.map(p => `
         <tr>
-          <td style="font-weight:600;color:var(--text-primary)">${p.ticker}</td>
-          <td><span class="tag ${catTagClass(p.categoria)}">${p.categoria}</span></td>
+          <td style="font-weight:600;color:var(--text-primary)">${esc(p.ticker)}</td>
+          <td><span class="tag ${catTagClass(p.categoria)}">${esc(p.categoria)}</span></td>
           <td class="mono">${fmt(p.totalCompra)}</td>
           <td class="mono">${fmt(p.totalVenta)}</td>
           <td class="mono">${fmt(p.ppc)}</td>
@@ -1405,6 +1392,10 @@
 
       renderCurrentView();
     }
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") { closeModal(); closeBrokerModal(); }
+    });
 
     init();
   </script>
